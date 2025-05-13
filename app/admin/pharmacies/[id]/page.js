@@ -10,6 +10,8 @@ import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL
+
 export default function EditPharmacy({ params }) {
   // Utiliser React.use pour déballer les params
   const resolvedParams = use(params)
@@ -34,7 +36,7 @@ export default function EditPharmacy({ params }) {
         setIsLoading(true)
 
         // Récupérer toutes les pharmacies puis filtrer par ID
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pharmacie`, {
+        const response = await fetch(`${API_URL}/pharmacie`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -71,7 +73,7 @@ export default function EditPharmacy({ params }) {
     try {
       const token = localStorage.getItem("adminToken")
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pharmacie/${id}`, {
+      const response = await fetch(`${API_URL}/pharmacie/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

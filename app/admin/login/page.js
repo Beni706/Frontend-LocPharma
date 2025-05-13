@@ -17,6 +17,8 @@ export default function AdminLoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsLoading(true)
@@ -24,7 +26,7 @@ export default function AdminLoginPage() {
 
     try {
       // Remplacer par un appel API réel
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/administrateur/login`, {
+      const response = await fetch(`${API_URL}/administrateur/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

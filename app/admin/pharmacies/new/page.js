@@ -8,6 +8,8 @@ import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL 
+
 export default function NewPharmacy() {
   const router = useRouter()
   const { toast } = useToast()
@@ -16,7 +18,7 @@ export default function NewPharmacy() {
     try {
       const token = localStorage.getItem("adminToken")
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pharmacie`, {
+      const response = await fetch(`${API_URL}/pharmacie`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

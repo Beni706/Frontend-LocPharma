@@ -12,6 +12,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import PharmacyMap from "./pharmacy-map"
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL // URL de l'API pour récupérer les pharmacies
+
 // Composant principal pour la recherche et l'affichage des pharmacies
 export default function PharmacyFinder() {
   // États pour la gestion de l'affichage, des données et des filtres
@@ -32,7 +34,7 @@ export default function PharmacyFinder() {
   useEffect(() => {
     async function fetchPharmacies() {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pharmacie`)
+        const response = await fetch(`${API_URL}/pharmacie`)
         const data = await response.json()
         setPharmacies(data)
         setNearbyPharmacies(data)
@@ -61,7 +63,7 @@ export default function PharmacyFinder() {
           setUserLocation(userLoc)
           // Appel API pour récupérer les pharmacies proches
           try {
-            const url = `${process.env.NEXT_PUBLIC_API_URL}/pharmacie/proche?latitude=${userLoc.lat.toFixed(6)}&longitude=${userLoc.lng.toFixed(6)}`
+            const url = `${API_URL}/pharmacie/proche?latitude=${userLoc.lat.toFixed(6)}&longitude=${userLoc.lng.toFixed(6)}`
             const response = await fetch(url)
             const data = await response.json()
             setNearbyPharmacies(data)

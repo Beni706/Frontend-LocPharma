@@ -10,6 +10,8 @@ import PharmacyChart from "@/components/admin/pharmacy-chart"
 import SearchChart from "@/components/admin/search-chart"
 import TopPharmacies from "@/components/admin/top-pharmacies"
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL
+
 export default function AdminDashboard() {
   const router = useRouter()
   const [stats, setStats] = useState({
@@ -32,7 +34,7 @@ export default function AdminDashboard() {
     // Charger les pharmacies
     const fetchPharmacies = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pharmacie`, {
+        const response = await fetch(`${API_URL}/pharmacie`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

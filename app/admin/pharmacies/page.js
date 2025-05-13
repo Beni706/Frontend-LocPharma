@@ -29,6 +29,8 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/components/ui/use-toast"
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL
+
 export default function PharmaciesList() {
   const router = useRouter()
   const [allPharmacies, setAllPharmacies] = useState([])
@@ -48,7 +50,7 @@ export default function PharmaciesList() {
       setIsLoading(true)
       const token = localStorage.getItem("adminToken")
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pharmacie`, {
+      const response = await fetch(`${API_URL}/pharmacie`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -124,7 +126,7 @@ export default function PharmaciesList() {
     try {
       const token = localStorage.getItem("adminToken")
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pharmacie/${pharmacyToDelete.id_pharmacie}`, {
+      const response = await fetch(`${API_URL}/pharmacie/${pharmacyToDelete.id_pharmacie}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
