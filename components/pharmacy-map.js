@@ -269,10 +269,11 @@ const PharmacyMap = ({ pharmacies, userLocation, selectedPharmacy, onPharmacySel
       const sortedPharmacies = [...pharmacies]
         .filter((p) => p.latitude && p.longitude) // S'assurer que les coordonnées sont valides
         .sort((a, b) => (a.distance || 0) - (b.distance || 0))
-        .slice(0, 3) // Limiter aux 3 plus proches
+        .slice(0, 5) 
 
       // Couleurs pour les itinéraires
-      const colors = ["#10b981", "#3b82f6", "#f59e0b"] // vert, bleu, orange
+      const colors = ["#10b981", "#3b82f6", "#f59e0b", "#ec4899", "#8b5cf6"] // vert, bleu, orange, rose, violet
+
 
       // Créer un itinéraire pour chaque pharmacie proche
       const fetchRoutes = async () => {

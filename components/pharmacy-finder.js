@@ -1,5 +1,6 @@
 "use client"
 
+// Importation des hooks React et des composants UI
 import { useState, useEffect } from "react"
 import { Search, MapPin, Clock, Phone, Filter, Navigation } from "lucide-react"
 import { Input } from "@/components/ui/input"
@@ -11,22 +12,23 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import PharmacyMap from "./pharmacy-map"
 
+// Composant principal pour la recherche et l'affichage des pharmacies
 export default function PharmacyFinder() {
-  const [pharmacies, setPharmacies] = useState([])
-  const [nearbyPharmacies, setNearbyPharmacies] = useState([])
-  const [userLocation, setUserLocation] = useState(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState("")
+  // États pour la gestion de l'affichage, des données et des filtres
+  const [showRoutes, setShowRoutes] = useState(false) // Afficher les itinéraires sur la carte
+  const [pharmacies, setPharmacies] = useState([]) // Toutes les pharmacies récupérées
+  const [nearbyPharmacies, setNearbyPharmacies] = useState([]) // Pharmacies proches de l'utilisateur
+  const [userLocation, setUserLocation] = useState(null) // Position de l'utilisateur
+  const [isLoading, setIsLoading] = useState(true) // Chargement en cours
+  const [searchTerm, setSearchTerm] = useState("") // Terme de recherche
   const [filters, setFilters] = useState({
-    openNow: false,
-    onDuty: false,
+    openNow: false, // Filtre "Ouvertes maintenant"
+    onDuty: false,  // Filtre "De garde"
   })
-  const [selectedPharmacy, setSelectedPharmacy] = useState(null)
-  const [showRoutes, setShowRoutes] = useState(false)
-  const [geoError, setGeoError] = useState(null)
-  const [watchId, setWatchId] = useState(null)
+  const [selectedPharmacy, setSelectedPharmacy] = useState(null) // Pharmacie sélectionnée
+  const [geoError, setGeoError] = useState(null) // Erreur de géolocalisation
 
-  // Récupérer les données des pharmacies
+  // Récupérer la liste des pharmacies au chargement du composant
   useEffect(() => {
     async function fetchPharmacies() {
       try {
@@ -40,187 +42,66 @@ export default function PharmacyFinder() {
         setIsLoading(false)
       }
     }
-
     fetchPharmacies()
+  }, [])
 
-    // Nettoyer le watchPosition lors du démontage du composant
-    return () => {
-      if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId)
-      }
-    }
-  }, [watchId])
-
-  // Modifions la fonction handleLocateUser pour activer le suivi en temps réel
-
-  // Remplacer la fonction handleLocateUser actuelle par celle-ci:
-  const handleLocateUser = () => {
+  // Fonction pour localiser l'utilisateur et récupérer les pharmacies proches
+  const locateUser = () => {
     if (navigator.geolocation) {
-      // Afficher un message de chargement
       setIsLoading(true)
       setGeoError(null)
-
-      // Options de géolocalisation pour améliorer la précision
-      const geoOptions = {
-        enableHighAccuracy: true, // Utiliser GPS si disponible
-        timeout: 20000, // Timeout après 20 secondes
-        maximumAge: 0, // Ne pas utiliser de cache
-      }
-
-      // Fonction pour gérer le succès de la géolocalisation
-      const geoSuccess = async (position) => {
-        try {
-          console.log("Position brute obtenue:", position.coords)
-          console.log("Précision:", position.coords.accuracy, "mètres")
-
-          // Extraire les coordonnées avec plus de précision
+      setShowRoutes(true)
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
           const userLoc = {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
             accuracy: position.coords.accuracy,
-            timestamp: position.timestamp,
           }
-
-          console.log("Position formatée:", userLoc)
-
-          // Vérifier si le déplacement est significatif (plus de 10 mètres)
-          // ou si c'est la première position obtenue
-          const isFirstPosition = !userLocation
-          const isSignificantMove =
-            isFirstPosition || calculateDistance(userLocation.lat, userLocation.lng, userLoc.lat, userLoc.lng) > 10
-
-          // Mettre à jour l'état avec la position de l'utilisateur
           setUserLocation(userLoc)
-
-          // Si c'est la première position ou un déplacement significatif,
-          // mettre à jour les pharmacies proches
-          if (isFirstPosition || isSignificantMove) {
-            try {
-              // Récupérer les pharmacies proches
-              const url = `${process.env.NEXT_PUBLIC_API_URL}/pharmacie/proche?latitude=${userLoc.lat.toFixed(6)}&longitude=${userLoc.lng.toFixed(6)}`
-              console.log("Requête API:", url)
-
-              const response = await fetch(url)
-
-              if (!response.ok) {
-                const errorText = await response.text()
-                throw new Error(`Erreur API (${response.status}): ${errorText}`)
-              }
-
-              const data = await response.json()
-
-              if (Array.isArray(data)) {
-                console.log("Pharmacies proches reçues:", data.length)
-
-                // Vérifier que les données contiennent des coordonnées valides
-                const validData = data.filter(
-                  (pharmacy) =>
-                    pharmacy &&
-                    typeof pharmacy.latitude === "number" &&
-                    typeof pharmacy.longitude === "number" &&
-                    !isNaN(pharmacy.latitude) &&
-                    !isNaN(pharmacy.longitude),
-                )
-
-                if (validData.length !== data.length) {
-                  console.warn(
-                    `${data.length - validData.length} pharmacies ont des coordonnées invalides et ont été filtrées`,
-                  )
-                }
-
-                setNearbyPharmacies(validData)
-
-                // Activer l'affichage des itinéraires
-                setShowRoutes(true)
-
-                // Sélectionner automatiquement la pharmacie la plus proche
-                if (validData.length > 0) {
-                  const sorted = [...validData].sort((a, b) => (a.distance || 0) - (b.distance || 0))
-                  setSelectedPharmacy(sorted[0])
-                }
-              } else {
-                console.error("Format de données inattendu:", data)
-                setGeoError("Format de données inattendu reçu du serveur")
-              }
-            } catch (apiError) {
-              console.error("Erreur lors de la récupération des pharmacies proches:", apiError)
-              setGeoError(`Erreur API: ${apiError.message}`)
+          // Appel API pour récupérer les pharmacies proches
+          try {
+            const url = `${process.env.NEXT_PUBLIC_API_URL}/pharmacie/proche?latitude=${userLoc.lat.toFixed(6)}&longitude=${userLoc.lng.toFixed(6)}`
+            const response = await fetch(url)
+            const data = await response.json()
+            setNearbyPharmacies(data)
+            setShowRoutes(true)
+            // Sélection automatique de la pharmacie la plus proche
+            if (data.length > 0) {
+              setSelectedPharmacy(data[0])
             }
+          } catch (error) {
+            console.error("Erreur lors de la récupération des pharmacies proches:", error)
+          } finally {
+            setIsLoading(false)
           }
-        } catch (error) {
-          console.error("Erreur générale dans geoSuccess:", error)
-          setGeoError(`Erreur: ${error.message}`)
-        } finally {
+        },
+        (error) => {
+          console.error("Erreur de géolocalisation:", error)
+          setGeoError("Impossible d'obtenir votre position.")
           setIsLoading(false)
-        }
-      }
-
-      // Fonction pour gérer l'erreur de géolocalisation
-      const geoError = (error) => {
-        console.error("Erreur de géolocalisation:", error)
-        let errorMsg = "Impossible d'obtenir votre position."
-
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            errorMsg += " Vous avez refusé l'accès à votre position."
-            break
-          case error.POSITION_UNAVAILABLE:
-            errorMsg += " Les informations de position ne sont pas disponibles."
-            break
-          case error.TIMEOUT:
-            errorMsg += " La demande de position a expiré."
-            break
-          case error.UNKNOWN_ERROR:
-            errorMsg += " Une erreur inconnue s'est produite."
-            break
-        }
-
-        setGeoError(errorMsg)
-        alert(errorMsg)
-        setIsLoading(false)
-      }
-
-      // Nettoyer l'ancien watchPosition s'il existe
-      if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId)
-      }
-
-      // Démarrer le suivi de position
-      const id = navigator.geolocation.watchPosition(geoSuccess, geoError, geoOptions)
-      setWatchId(id)
-
-      // Également obtenir une position immédiate
-      navigator.geolocation.getCurrentPosition(geoSuccess, geoError, geoOptions)
+        },
+        { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+      )
     } else {
       alert("La géolocalisation n'est pas prise en charge par votre navigateur.")
     }
   }
 
-  // Ajouter cette fonction pour calculer la distance entre deux points
-  const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371e3 // Rayon de la terre en mètres
-    const φ1 = (lat1 * Math.PI) / 180
-    const φ2 = (lat2 * Math.PI) / 180
-    const Δφ = ((lat2 - lat1) * Math.PI) / 180
-    const Δλ = ((lon2 - lon1) * Math.PI) / 180
+  // Rafraîchit la position de l'utilisateur toutes les 2 minutes
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      locateUser()
+    }, 120000) // 2 minutes
+    return () => clearInterval(intervalId)
+  }, [])
 
-    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2)
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-
-    return R * c // Distance en mètres
-  }
-
-  // Gérer le clic sur une pharmacie dans la liste
-  const handlePharmacySelect = (pharmacy) => {
-    setSelectedPharmacy(pharmacy)
-    // Conserver l'état des itinéraires
-  }
-
+  // Filtrage des pharmacies selon la recherche et les filtres actifs
   const filteredPharmacies = nearbyPharmacies
     .filter(
       (pharmacy) =>
         pharmacy.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        pharmacy.adresse.toLowerCase().includes(searchTerm.toLowerCase()),
+        pharmacy.adresse.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .filter((pharmacy) => {
       if (filters.openNow && !pharmacy.isOpen) return false
@@ -228,9 +109,12 @@ export default function PharmacyFinder() {
       return true
     })
 
+  // Rendu du composant
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Colonne de gauche : liste et recherche */}
       <div className="order-1 lg:order-1">
+        {/* Barre de recherche et boutons */}
         <div className="flex items-center gap-2 mb-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -241,15 +125,17 @@ export default function PharmacyFinder() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          {/* Bouton de localisation */}
           <Button
             variant="outline"
-            className={`${watchId !== null ? "bg-blue-600" : "bg-emerald-600"} text-white hover:bg-emerald-700 flex items-center gap-2`}
-            onClick={handleLocateUser}
+            className="bg-emerald-600 text-white hover:bg-emerald-700 flex items-center gap-2"
+            onClick={locateUser}
             disabled={isLoading}
           >
-            <Navigation className={`h-4 w-4 ${watchId !== null ? "animate-pulse" : ""}`} />
-            {isLoading ? "Localisation..." : watchId !== null ? "Suivi actif" : "Près de moi"}
+            <Navigation className="h-4 w-4" />
+            {isLoading ? "Localisation..." : "Près de moi"}
           </Button>
+          {/* Bouton pour ouvrir les filtres */}
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="outline" size="icon">
@@ -263,6 +149,7 @@ export default function PharmacyFinder() {
                 <SheetDescription>Filtrer les pharmacies selon vos besoins</SheetDescription>
               </SheetHeader>
               <div className="grid gap-4 py-4">
+                {/* Filtre "Ouvertes maintenant" */}
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="open-now"
@@ -271,6 +158,7 @@ export default function PharmacyFinder() {
                   />
                   <Label htmlFor="open-now">Ouvertes maintenant</Label>
                 </div>
+                {/* Filtre "De garde" */}
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="on-duty"
@@ -284,15 +172,10 @@ export default function PharmacyFinder() {
           </Sheet>
         </div>
 
+        {/* Affichage des erreurs de géolocalisation */}
         {geoError && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md text-sm">{geoError}</div>}
 
-        {userLocation && (
-          <div className="mb-4 p-3 bg-blue-100 text-blue-700 rounded-md text-sm">
-            Position: {userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}
-            {userLocation.accuracy && ` (précision: ~${Math.round(userLocation.accuracy)}m)`}
-          </div>
-        )}
-
+        {/* Liste des pharmacies filtrées */}
         <div className="h-[500px] overflow-y-auto pr-2 space-y-4">
           {isLoading ? (
             <div className="flex items-center justify-center h-full">
@@ -309,7 +192,7 @@ export default function PharmacyFinder() {
                 className={`cursor-pointer hover:border-emerald-500 transition-colors ${
                   selectedPharmacy?.id_pharmacie === pharmacy.id_pharmacie ? "border-emerald-500" : ""
                 }`}
-                onClick={() => handlePharmacySelect(pharmacy)}
+                onClick={() => setSelectedPharmacy(pharmacy)}
               >
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start">
@@ -333,29 +216,16 @@ export default function PharmacyFinder() {
                       )}
                     </div>
                     <div className="flex flex-col items-end gap-2">
+                      {/* Badge de distance */}
                       {pharmacy.distance !== undefined && (
                         <Badge variant="outline" className="bg-emerald-50">
                           {pharmacy.distance.toFixed(2)} km
                         </Badge>
                       )}
+                      {/* Badge "De garde" */}
                       {pharmacy.isOnDuty && <Badge className="bg-emerald-600">De garde</Badge>}
                     </div>
                   </div>
-                  {pharmacy.services && (
-                    <div className="mt-3">
-                      <p className="text-xs text-gray-500 mb-1">Services:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {pharmacy.services.split(", ").map((service, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {service}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {pharmacy.info_supplementaire && (
-                    <p className="text-sm text-gray-600 mt-2">{pharmacy.info_supplementaire}</p>
-                  )}
                 </CardContent>
               </Card>
             ))
@@ -363,12 +233,13 @@ export default function PharmacyFinder() {
         </div>
       </div>
 
+      {/* Colonne de droite : carte des pharmacies */}
       <div className="order-2 lg:order-2 h-[300px] lg:h-[500px]">
         <PharmacyMap
           pharmacies={filteredPharmacies}
           userLocation={userLocation}
           selectedPharmacy={selectedPharmacy}
-          onPharmacySelect={handlePharmacySelect}
+          onPharmacySelect={setSelectedPharmacy}
           showRoutes={showRoutes}
         />
       </div>

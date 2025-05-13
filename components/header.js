@@ -22,6 +22,7 @@ export default function Header() {
             </div>
           </Link>
         </div>
+        
         <div className="flex items-center gap-4">
           <ThemeToggle />
           <Link

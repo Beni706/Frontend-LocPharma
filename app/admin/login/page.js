@@ -97,7 +97,7 @@ export default function AdminLoginPage() {
           </form>
         </CardContent>
         <CardFooter className="flex justify-center">
-          <p className="text-sm text-gray-500">Pour la démo, utilisez: admin@pharmalabs.com / password</p>
+          <p className="text-sm text-gray-500"></p>
         </CardFooter>
       </Card>
     </div>
