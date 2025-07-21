@@ -33,6 +33,7 @@ export default function PharmacyFinder() {
   // Récupérer la liste des pharmacies au chargement du composant
   useEffect(() => {
     async function fetchPharmacies() {
+      console.log(API_URL)
       try {
         const response = await fetch(`${API_URL}/pharmacie`)
         const data = await response.json()
