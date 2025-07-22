@@ -20,7 +20,6 @@ RUN pnpm install
 
 # Copier le reste du projet (app, components, public, etc.)
 COPY . .
-COPY .env.local ./
 
 # Build de l'app
 RUN pnpm build
