@@ -21,6 +21,10 @@ RUN pnpm install
 # Copier le reste du projet (app, components, public, etc.)
 COPY . .
 
+# Ajoute ces deux lignes AVANT le build
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 # Build de l'app
 RUN pnpm build
 
