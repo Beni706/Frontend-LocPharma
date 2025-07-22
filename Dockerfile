@@ -20,6 +20,7 @@ RUN pnpm install
 
 # Copier le reste du projet (app, components, public, etc.)
 COPY . .
+COPY .env.local ./
 
 # Build de l'app
 RUN pnpm build
@@ -41,6 +42,8 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/next.config.mjs ./next.config.mjs
 
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
 EXPOSE 3000
 
